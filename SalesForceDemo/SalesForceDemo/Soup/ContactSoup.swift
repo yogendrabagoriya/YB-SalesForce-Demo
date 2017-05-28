@@ -8,7 +8,7 @@
 
 import Foundation
 import SmartStore
-
+import SmartSync
 
 class ContactSoup : NSObject {
     
@@ -62,6 +62,22 @@ class ContactSoup : NSObject {
         }
         return formatedSoupData
     }
+    
+    func syncFromCloud(complitionHandler : @escaping (SFSyncStateStatus)->())
+    {
+        let syncManager = SFSmartSyncSyncManager.sharedInstance(for: StoreManager.store())
+        _ = syncManager?.syncDown(with: SFSyncDownTarget(), soupName: kSoupNameContact, update: { state in
+            complitionHandler(state!.status)
+        })
+    }
+    
+    func syncToCloud(complitionHandler : @escaping (SFSyncStateStatus)->())
+    {
+        let syncManager = SFSmartSyncSyncManager.sharedInstance(for: StoreManager.store())
+        _ = syncManager?.syncUp(with: SFSyncOptions.newSyncOptions(forSyncUp: ["name"], mergeMode: .overwrite), soupName: kSoupNameContact, update: { state in
+            complitionHandler(state!.status)
+        })
+    }
 
     func deleteById(userId : String)->(Bool)
     {
@@ -96,6 +112,8 @@ class ContactSoup : NSObject {
         {
             let dic = [["Name":newName,"_soupEntryId":soupEntryId ]] as [Any]
             let response = StoreManager.store().upsertEntries(dic , toSoup: kSoupNameContact)
+            //let dic1 = [["Name":newName]] as [Any]
+//            let response = StoreManager.store().upsertEntries(dic, toSoup: kSoupNameContact, withExternalIdPath: "_soupEntryId")
             print("\(response!)")
         }
     }

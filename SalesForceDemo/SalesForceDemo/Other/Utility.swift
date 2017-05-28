@@ -16,6 +16,8 @@ class Utility : Any {
         let message = dict["message"]
         let alertController =  UIAlertController(title: "TrialHead iOS", message: message, preferredStyle: UIAlertControllerStyle.alert)
         alertController.addAction(UIAlertAction(title: "Ok", style: .cancel, handler: nil))
-        vc.present(alertController, animated: true, completion: nil)
+        DispatchQueue.main.async {
+            vc.present(alertController, animated: true, completion: nil)
+        }
     }
 }

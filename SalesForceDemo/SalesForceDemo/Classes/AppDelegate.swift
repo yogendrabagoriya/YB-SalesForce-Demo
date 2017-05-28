@@ -99,8 +99,9 @@ class AppDelegate : UIResponder, UIApplicationDelegate
         let story = UIStoryboard(name: "main", bundle: nil)
 
         let rootVC = story.instantiateViewController(withIdentifier: "RootViewController")
-        let navVC = UINavigationController(rootViewController: rootVC)
-        self.window!.rootViewController = navVC
+//        self.window?.rootViewController = rootVC
+//        let navVC = UINavigationController(rootViewController: rootVC)
+        self.window!.rootViewController = rootVC
     }
     
     func resetViewState(_ postResetBlock: @escaping () -> ())

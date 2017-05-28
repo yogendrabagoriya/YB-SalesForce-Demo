@@ -10,7 +10,6 @@ import Foundation
 import UIKit
 import SalesforceSDKCore
 import SmartStore
-import SmartSync
 
 
 class RootViewController : UIViewController, UITableViewDelegate, UITableViewDataSource, SFRestDelegate
@@ -29,11 +28,11 @@ class RootViewController : UIViewController, UITableViewDelegate, UITableViewDat
     }()
     
     // MARK: - View lifecycle
-    override func loadView()
-    {
-        super.loadView()
-        self.title = "Mobile SDK Sample App"
-    }
+//    override func loadView()
+//    {
+//        super.loadView()
+//        self.title = "Mobile SDK Sample App"
+//    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,15 +46,58 @@ class RootViewController : UIViewController, UITableViewDelegate, UITableViewDat
         self.requestForDataOnline()
     }
     
-    func fetchAndLoadLocally()
-    {
-        // Get data from local Soup if exist
-        let soupData = ContactSoup.sharedContactSoup().fetchFromSoup()
-        self.dataRows = soupData as! [NSDictionary]
-        DispatchQueue.main.async {
-            self.userTableView.reloadData()
+    //  MARK:-  Sync Management
+    
+    // This sync your local soup to Sales Force Cloud
+    @IBAction func upSync(_ sender: UIBarButtonItem) {
+        ContactSoup.sharedInstance.syncToCloud { (status) in
+            if status == .done
+            {
+                Utility.showAlertView(vc: self, dict: ["message":"Local Soup is Synched  SalesForce cloud successfully"])
+            }
+            else if status == .failed
+            {
+                Utility.showAlertView(vc: self, dict: ["message":" Synched to SalesForce cloud is FAILED"])
+            }
+            else if status == .new
+            {
+                
+            }
+            else if status == .running
+            {
+                
+            }
         }
     }
+    // This sync Sales Force Cloud to your local Soup
+    @IBAction func downSync(_ sender: UIBarButtonItem) {
+        ContactSoup.sharedInstance.syncFromCloud { (status) in
+            if status == .done
+            {
+                Utility.showAlertView(vc: self, dict: ["message":" Synched to SalesForce cloud is Done"])
+                DispatchQueue.main.async {
+                    self.userTableView.reloadData()
+                    self.refreshCont.endRefreshing()
+                }
+            }
+            else if status == .failed
+            {
+                Utility.showAlertView(vc: self, dict: ["message":" Synched to SalesForce cloud is FAILED"])
+            }
+            else if status == .new
+            {
+                
+            }
+            else if status == .running
+            {
+                
+            }
+            DispatchQueue.main.async {
+                self.refreshCont.endRefreshing()
+            }
+        }
+    }
+    
     
     // MARK: - SFRestDelegate
     func request(_ request: SFRestRequest, didLoadResponse jsonResponse: Any)
@@ -170,7 +212,7 @@ class RootViewController : UIViewController, UITableViewDelegate, UITableViewDat
     //MARK:- Other private method
     func deleteByUserIdOnine(userId : String) {
         let request = SFRestAPI.sharedInstance().requestForDelete(withObjectType: "Contact", objectId: userId)
-        request.accessibilityLabel = kAccessLabelgetDataOnline
+        request.accessibilityLabel = kAccessLabelgetDeleteOnline
         SFRestAPI.sharedInstance().send(request, delegate: self)
     }
     
@@ -185,14 +227,17 @@ class RootViewController : UIViewController, UITableViewDelegate, UITableViewDat
     // This will update your local data from sales force cloud data
     func refreshFromSFCloude()
     {
-        let syncManager = SFSmartSyncSyncManager.sharedInstance(for: StoreManager.store())
-        
-        _ = syncManager?.syncDown(with: SFSyncDownTarget(), soupName: kSoupNameContact, update: { _ in
-            DispatchQueue.main.async {
-                self.userTableView.reloadData()
-                self.refreshCont.endRefreshing()
-            }
-        })
+        self.downSync(UIBarButtonItem())
+    }
+    
+    func fetchAndLoadLocally()
+    {
+        // Get data from local Soup if exist
+        let soupData = ContactSoup.sharedContactSoup().fetchFromSoup()
+        self.dataRows = soupData as! [NSDictionary]
+        DispatchQueue.main.async {
+            self.userTableView.reloadData()
+        }
     }
     
     //  Present Alert controller with text field to edit name.
